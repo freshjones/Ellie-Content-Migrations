@@ -1,0 +1,7 @@
+name = Ellie Content Migrations
+core = 7.x
+package = FreshJones
+version = 7.x-1.0
+
+files[] = migrations/unmigrate.inc
+files[] = migrations/pages.inc
