@@ -194,7 +194,6 @@ class PagesMigration extends Migration
     $fields = array (
       'id' => 'Unique page ID',
       'title' => 'Page title',
-      'body' => 'Page body',
     );
     
     $contentDir = realpath(DRUPAL_ROOT . '/../content/pages');
@@ -204,7 +203,6 @@ class PagesMigration extends Migration
     $this->destination = new MigrateDestinationNode('pages');
       
     $this->addFieldMapping('title', 'title');
-    $this->addFieldMapping('body', 'body');
 
     $this->addFieldMapping('uid')->defaultValue(1);
     $this->addFieldMapping('status')->defaultValue(1);
@@ -214,9 +212,11 @@ class PagesMigration extends Migration
     //Unmigrate        
     $unmigrate = new buildUnMigrateList();
 
-    $unmigrate->setListItems(array('body:format','body:summary'));
     $unmigrate->setListItems(array('path'));
 
+    //unmigrate this for now...
+    $unmigrate->setListItems(array('field_content'));
+    
     $unmigrate->setListItems(array('metatag_title','metatag_description','metatag_abstract', 'metatag_keywords'));
     $unmigrate->setListItems(array('metatag_robots','metatag_news_keywords','metatag_standout', 'metatag_rating'));
     $unmigrate->setListItems(array('metatag_referrer','metatag_generator','metatag_rights', 'metatag_image_src'));
