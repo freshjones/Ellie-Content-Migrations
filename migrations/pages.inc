@@ -243,7 +243,11 @@ class PagesMigration extends Migration
       );
       
       $item_id = menu_link_save($item);
-        
+      
+      if($row->id == 'home')
+      {
+          variable_set('site_frontpage', 'node/' . $entity->nid);
+      }
 
   }
   
