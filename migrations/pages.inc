@@ -1,65 +1,168 @@
 <?php
 
-class EllieContentListJSON extends MigrateListJSON 
+class EllieContentMigrateList extends MigrateList 
 {
 
-  protected function getIDsFromJSON(array $data)
-  {
-
-    $ids = array();
-
-    foreach ($data as $item) 
+    private $path;
+    private $type;
+    
+    public function __construct($list_url, $type = 'pages') 
     {
-      $ids[] = $item['id'];
+        parent::__construct();
+        $this->path = $list_url;
+        $this->type = $type;
+    }
+    
+    /**
+     * Our public face is the dir we're getting items from
+     *
+     * @return string
+     */
+    public function __toString() 
+    {
+        return $this->path;
+    }
+    
+    /**
+     * Load each directory within the content type, and return an array of the IDs for each directory.
+     *
+     * @return array
+     */
+    public function getIdList() 
+    {
+        
+        $idList = array();
+        
+        foreach (new DirectoryIterator($this->path) as $fileInfo) 
+        {
+            if($fileInfo->isDot()) continue;
+            if( $fileInfo->isDir() )
+            {
+                $idList[] = $fileInfo->getFilename();
+            }
+        }
+        
+        if(!empty($idList))
+        {
+            return $idList;
+        }
+        
+        Migration::displayMessage(t('Loading of !listurl failed:',
+            array('!listurl' => $this->listUrl)));
+        
+        return null;
+
     }
 
-    return $ids;
-
-  }
-
+    public function computeCount() 
+    {
+        $count = 0;
+        
+        $idList = array();
+        
+        foreach (new DirectoryIterator($this->path) as $fileInfo)
+        {
+            if($fileInfo->isDot()) continue;
+            if( $fileInfo->isDir() )
+            {
+                $idList[] = $fileInfo->getFilename();
+            }
+        }
+        
+        if(!empty($idList))
+        {
+            return count($idList);
+        }
+        
+        return $count;
+        
+    }
+    
 }
 
-class EllieContentItemJSON extends MigrateItemJSON 
+class EllieContentMigrateItem extends MigrateItem
 {
 
-  protected $data = array();
-
-  public function getItem($id) 
-  {
-
-    // We cache the parsed JSON at $this->data.
-    if (empty($this->data)) 
+    protected $path;
+    protected $type;
+    protected $itemID = NULL;
+    protected $item = NULL;
+    
+    public function __construct($path, $type) 
     {
-
-      $data = $this->loadJSONUrl($this->itemUrl);
-      
-      if ($data) 
-      {
-
-        // Let's index the array by the ID for easy retrieval.
-        foreach ($data as $item) 
+        parent::__construct();
+        $this->path = $path;
+        $this->type = $type;
+    }
+    
+    public function getItem($id) 
+    {
+        
+        $this->itemID = $id;
+        
+        $itemPath = $this->path . '/' . $id;
+        
+        if(is_dir($itemPath))
         {
-          $this->data[$item->id] = $item;
+          
+            $filename = $itemPath . '/content.txt';
+
+            if(file_exists($filename))
+            {
+                $itemContent = file_get_contents($filename);
+                
+                if(strlen($itemContent))
+                {
+                    $this->setItemObject($itemContent);
+                    
+                }
+                
+            }
+         
+        } 
+        
+        return $this->getItemObject();
+        
+    }
+    
+    private function setItemObject($item)
+    {
+        
+        $elementsArray = preg_split ('/\[(.*)\]/', $item, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        
+        $counter = 0;
+        if(!empty($elementsArray))
+        {
+            $objArray = array();
+            foreach($elementsArray AS $key => $value)
+            {
+                if( ($counter++ % 2) == 0 ) 
+                {
+                    $objArray[$value] = $elementsArray[$key + 1];
+                }
+            }
+            
+            $this->item = isset($objArray) && !empty($objArray) ? (object)$objArray : NULL;
+            
         }
 
-      }
-      else {
-        // Error-handling here....
-      }
-
     }
-
-    // Return the requested item
-    if (isset($this->data[$id])) 
+    
+    private function getItemObject()
     {
-      return $this->data[$id];
+        
+        if(is_null($this->item) )
+        {
+            $migration = Migration::currentMigration();
+            $message =  t('Loading of !objecturl failed:', array('!objecturl' => $this->path));
+            $migration->getMap()->saveMessage(
+                array($this->itemID), $message, MigrationBase::MESSAGE_ERROR);
+            return NULL;
+        }
+        
+        return $this->item;
+        
     }
-    else 
-    {
-      return NULL;
-    }
-  
-  }
 
 }
 
@@ -78,9 +181,11 @@ class PagesMigration extends Migration
       $this->machineName,
       array(
         'id' => array
-                ('type' => 'int',
-                  'unsigned' => TRUE,
-                  'not null' => TRUE,
+                (
+                    'type' => 'varchar',
+                    'length' => 255,
+                    'not null' => TRUE,
+                    'description' => 'Page ID',
                 ),
       ),
       MigrateDestinationNode::getKeySchema()
@@ -89,17 +194,17 @@ class PagesMigration extends Migration
     $fields = array (
       'id' => 'Unique page ID',
       'title' => 'Page title',
-      'description' => 'Page body',
+      'body' => 'Page body',
     );
     
-    $json_file = realpath(__DIR__ . '/../data/data.json');
-
-    $this->source = new MigrateSourceList(new EllieContentListJSON($json_file), new EllieContentItemJSON($json_file, array()), $fields);
+    $contentDir = realpath(DRUPAL_ROOT . '/../content/pages');
+    
+    $this->source = new MigrateSourceList(new EllieContentMigrateList($contentDir, 'pages'), new EllieContentMigrateItem($contentDir, 'pages'), $fields );
 
     $this->destination = new MigrateDestinationNode('pages');
       
     $this->addFieldMapping('title', 'title');
-    $this->addFieldMapping('body', 'description');
+    $this->addFieldMapping('body', 'body');
 
     $this->addFieldMapping('uid')->defaultValue(1);
     $this->addFieldMapping('status')->defaultValue(1);
@@ -125,5 +230,21 @@ class PagesMigration extends Migration
     $this->addUnmigratedDestinations($unmigrateData);
 
   }
+  
+  public function complete($entity, stdClass $row) 
+  {
+      
+      $item = array(
+          'link_path' => 'node/' . $entity->nid,
+          'link_title' => $entity->title,
+          'menu_name' => 'main-menu',
+          'weight' => 0,
+          'expanded' => 0,
+      );
+      
+      $item_id = menu_link_save($item);
+        
 
+  }
+  
 }
