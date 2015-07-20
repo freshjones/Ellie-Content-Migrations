@@ -128,7 +128,7 @@ class EllieContentMigrateItem extends MigrateItem
     private function setItemObject($item)
     {
         
-        $elementsArray = preg_split ('/\[(.*)\]/', $item, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        $elementsArray = preg_split ('/\r\n|\n|\r/', $item, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         
         $counter = 0;
         if(!empty($elementsArray))
