@@ -173,9 +173,9 @@ class EllieSectionMigrateItem extends MigrateItem
 class SectionMigration extends Migration 
 {
 
-    public function __construct() 
+    public function __construct($arguments) 
     {
-        parent::__construct();
+        parent::__construct($arguments);
     
         $this->description = t('Import of Sections.');
         $this->dependencies = array

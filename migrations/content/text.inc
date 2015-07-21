@@ -4,21 +4,21 @@
 class ContentTextMigration extends Migration 
 {
 
-    public function __construct() 
+    public function __construct($arguments) 
     {
-        parent::__construct();
+        parent::__construct($arguments);
         
         $this->description = t('Import of Text Content.');
         
         $fields = array (
             'id' => 'Unique page ID',
-            'title' => 'Page title',
+            'text' => 'Text Field',
         );
         
         $contentDir = realpath(DRUPAL_ROOT . '/../content/pages');
         
-        $contentList = new EllieSectionMigrateList($contentDir, 'text');
-        $contentItem = new EllieSectionMigrateItem($contentDir, 'text');
+        $contentList = new EllieContentMigrateList($contentDir, 'text');
+        $contentItem = new EllieContentMigrateItem($contentDir, 'text');
         
         $this->source = new MigrateSourceList($contentList, $contentItem, $fields );
             
@@ -37,8 +37,14 @@ class ContentTextMigration extends Migration
           MigrateDestinationEntityAPI::getKeySchema('content_elements', 'text_block')
         );
         
+        $this->addFieldMapping('field_body', 'text');
+        
         //Unmigrate
         $unmigrate = new buildUnMigrateList();
+        
+        $unmigrate->setListItems(array('field_body:summary', 'field_body:format'));
+        
+        $unmigrate->setDefaults(array('type', 'path'));
         
         $unmigrateData = $unmigrate->getListItems();
         
