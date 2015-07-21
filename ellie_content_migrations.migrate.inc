@@ -20,15 +20,15 @@ function ellie_content_migrations_migrate_api()
 	'migrations' => array
     (
 			
-		'pages' => array(
+		'Pages' => array(
 				'class_name' => 'PagesMigration',
 				'group_name' => 'pages',
 		),
-	    'sections' => array(
+	    'Sections' => array(
     	        'class_name' => 'SectionMigration',
     	        'group_name' => 'sections',
 	    ),
-	    'content_text' => array(
+	    'ContentText' => array(
     	        'class_name' => 'ContentTextMigration',
     	        'group_name' => 'content',
 	    ),

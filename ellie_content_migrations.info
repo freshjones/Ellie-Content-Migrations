@@ -5,3 +5,5 @@ version = 7.x-1.0
 
 files[] = migrations/unmigrate.inc
 files[] = migrations/pages.inc
+files[] = migrations/sections.inc
+files[] = migrations/content/text.inc
