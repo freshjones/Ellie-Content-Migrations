@@ -134,13 +134,17 @@ class EllieContentMigrateItem extends MigrateItem
         if(!empty($elementsArray))
         {
             $objArray = array();
-            foreach($elementsArray AS $key => $value)
+            
+            $title = $elementsArray[0];
+            $content = NULL;
+            
+            if(isset($elementsArray[1]))
             {
-                if( ($counter++ % 2) == 0 ) 
-                {
-                    $objArray[$value] = $elementsArray[$key + 1];
-                }
+                $content = explode(',', $elementsArray[1]);
             }
+            
+            $objArray['title'] = $title;
+            $objArray['content'] = $content;
             
             $this->item = isset($objArray) && !empty($objArray) ? (object)$objArray : NULL;
             
