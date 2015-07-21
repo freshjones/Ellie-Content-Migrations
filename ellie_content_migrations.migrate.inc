@@ -29,7 +29,8 @@ function ellie_content_migrations_migrate_api()
     	        'group_name' => 'sections',
 	    ),
 	    'content_text' => array(
-	        'class_name' => 'ContentTextMigration',
+    	        'class_name' => 'ContentTextMigration',
+    	        'group_name' => 'content',
 	    ),
 	    
     ),
