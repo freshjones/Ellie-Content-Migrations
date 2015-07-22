@@ -15,8 +15,8 @@ class ContentTextMigration extends Migration
             'text' => 'Text Field',
         );
         
-        $contentDir = realpath(DRUPAL_ROOT . '/../content/pages');
-        
+        $contentDir = realpath(DRUPAL_ROOT . '/../content/content');
+
         $contentList = new EllieContentMigrateList($contentDir, 'text');
         $contentItem = new EllieContentMigrateItem($contentDir, 'text');
         

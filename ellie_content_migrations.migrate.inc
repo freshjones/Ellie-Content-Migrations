@@ -10,9 +10,6 @@ function ellie_content_migrations_migrate_api()
 	    (
 			'title' => t('Pages'),
 		),
-	    'sections' => array(
-	        'title' => t('Sections'),
-	    ),
 	    'content' => array(
 	        'title' => t('Content'),
 	    ),
@@ -24,9 +21,9 @@ function ellie_content_migrations_migrate_api()
 				'class_name' => 'PagesMigration',
 				'group_name' => 'pages',
 		),
-	    'Sections' => array(
-    	        'class_name' => 'SectionMigration',
-    	        'group_name' => 'sections',
+	    'ContentSections' => array(
+    	        'class_name' => 'ContentSectionMigration',
+    	        'group_name' => 'content',
 	    ),
 	    'ContentText' => array(
     	        'class_name' => 'ContentTextMigration',

@@ -136,15 +136,18 @@ class ElliePageMigrateItem extends MigrateItem
             $objArray = array();
             
             $title = $elementsArray[0];
-            $content = NULL;
+            $contentIDs = NULL;
+
+            $numElements = count($elementsArray);
             
-            if(isset($elementsArray[1]))
+            if($numElements > 1)
             {
-                $content = explode(',', $elementsArray[1]);
+                $contentIDs = $elementsArray;
+                array_shift($contentIDs);
             }
             
             $objArray['title'] = $title;
-            $objArray['content'] = $content;
+            $objArray['contentIDs'] = $contentIDs;
             
             $this->item = isset($objArray) && !empty($objArray) ? (object)$objArray : NULL;
             
@@ -180,6 +183,12 @@ class PagesMigration extends Migration
 
     $this->description = t('Page Migrations');
 
+    $this->dependencies = array
+    (
+        'ContentSections',
+        'ContentText',
+    );
+    
     $this->map = new MigrateSQLMap
     (
       $this->machineName,
@@ -196,8 +205,9 @@ class PagesMigration extends Migration
     );
 
     $fields = array (
-      'id' => 'Unique page ID',
-      'title' => 'Page title',
+      'id'          => 'Unique page ID',
+      'title'       => 'Page title',
+      'contentIDs'  => 'Content IDs',
     );
     
     $contentDir = realpath(DRUPAL_ROOT . '/../content/pages');
@@ -210,6 +220,8 @@ class PagesMigration extends Migration
     $this->destination = new MigrateDestinationNode('pages');
       
     $this->addFieldMapping('title', 'title');
+    $this->addFieldMapping('field_content_element_ref', 'contentIDs')
+        ->sourceMigration(array('ContentSections','ContentText'));
 
     $this->addFieldMapping('uid')->defaultValue(1);
     $this->addFieldMapping('status')->defaultValue(1);
@@ -219,10 +231,7 @@ class PagesMigration extends Migration
     //Unmigrate        
     $unmigrate = new buildUnMigrateList();
 
-    $unmigrate->setListItems(array('path'));
-
-    //unmigrate this for now...
-    $unmigrate->setListItems(array('field_content'));
+    $unmigrate->setListItems(array('path', 'pathauto'));
     
     $unmigrate->setListItems(array('metatag_title','metatag_description','metatag_abstract', 'metatag_keywords'));
     $unmigrate->setListItems(array('metatag_robots','metatag_news_keywords','metatag_standout', 'metatag_rating'));

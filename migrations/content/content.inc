@@ -32,13 +32,25 @@ class EllieContentMigrateList extends MigrateList
     {
 
         $idList = array();
-
-        foreach (new DirectoryIterator($this->path) as $fileInfo)
+        
+        $directory = new RecursiveDirectoryIterator($this->path);
+        $iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::SELF_FIRST);
+        
+        foreach ($iterator as $fileInfo)
         {
-            if($fileInfo->isDot()) continue;
             if( $fileInfo->isDir() )
             {
-                $idList[] = $fileInfo->getFilename();
+                $fullname = trim($fileInfo->getFilename());
+        
+                $delimiter = strpos($fullname, "_");
+        
+                $dirname = substr($fullname, 0, $delimiter);
+        
+                if($dirname === $this->type)
+                {
+                    $idList[] = $fullname;
+                }
+        
             }
         }
 
@@ -60,12 +72,24 @@ class EllieContentMigrateList extends MigrateList
 
         $idList = array();
 
-        foreach (new DirectoryIterator($this->path) as $fileInfo)
+        $directory = new RecursiveDirectoryIterator($this->path);
+        $iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::SELF_FIRST);
+        
+        foreach ($iterator as $fileInfo) 
         {
-            if($fileInfo->isDot()) continue;
             if( $fileInfo->isDir() )
             {
-                $idList[] = $fileInfo->getFilename();
+                $fullname = trim($fileInfo->getFilename());
+                
+                $delimiter = strpos($fullname, "_");
+                
+                $dirname = substr($fullname, 0, $delimiter);
+                
+                if($dirname === $this->type)
+                {
+                    $idList[] = $fullname;
+                }
+                
             }
         }
 
@@ -87,26 +111,32 @@ class EllieContentMigrateItem extends MigrateItem
     protected $type;
     protected $itemID = NULL;
     protected $item = NULL;
-
+    protected $itemPath = NULL;
+    
     public function __construct($path, $type)
     {
         parent::__construct();
         $this->path = $path;
         $this->type = $type;
     }
-
+    
     public function getItem($id)
     {
-
+        
+        //set the itemID
         $this->itemID = $id;
+        
+        //map the correct path to the item
+        $this->setItemPath();
+        
+        //get the path
+        $itemPath = $this->getItemPath();
 
-        $itemPath = $this->path . '/' . $id;
-
-        if(is_dir($itemPath))
+        if(!is_null($itemPath) && is_dir($itemPath))
         {
 
             $filename = $itemPath . '/content.txt';
-
+   
             if(file_exists($filename))
             {
                 $itemContent = file_get_contents($filename);
@@ -125,34 +155,44 @@ class EllieContentMigrateItem extends MigrateItem
 
     }
 
-    private function setItemObject($item)
+    private function setItemPath()
+    {
+        
+        $directory = new RecursiveDirectoryIterator($this->path);
+        $iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::SELF_FIRST);
+        
+        foreach ($iterator as $fileInfo)
+        {
+            if( $fileInfo->isDir() )
+            {
+                $dirname = trim($fileInfo->getFilename());
+        
+                if($dirname === $this->itemID)
+                {
+                    $this->itemPath = $fileInfo->getPathname();
+                }
+        
+            }
+        }
+        
+    }
+    
+    private function getItemPath()
+    {
+        return $this->itemPath;
+    }
+    
+    protected function setItemObject($item)
     {
 
-        $elementsArray = preg_split ('/\r\n|\n|\r/', $item, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        $objArray = array();
+        $objArray['text'] = $item;
 
-        $counter = 0;
-        if(!empty($elementsArray))
-        {
-            $objArray = array();
-
-            $title = $elementsArray[0];
-            $content = NULL;
-
-            if(isset($elementsArray[1]))
-            {
-                $content = explode(',', $elementsArray[1]);
-            }
-
-            $objArray['title'] = $title;
-            $objArray['content'] = $content;
-
-            $this->item = isset($objArray) && !empty($objArray) ? (object)$objArray : NULL;
-
-        }
+        $this->item = isset($objArray) && !empty($objArray) ? (object)$objArray : NULL;
 
     }
 
-    private function getItemObject()
+    protected function getItemObject()
     {
 
         if(is_null($this->item) )
